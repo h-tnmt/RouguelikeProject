@@ -8,7 +8,7 @@ using UnityEngine;
 public class DungeonControl : MonoBehaviour
 {
     [SerializeField]
-    DungeonGenerator dgGenerator;
+    DungeonGenerator dgGenerator = default;
 
     private void Start()
     {
