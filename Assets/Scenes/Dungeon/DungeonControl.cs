@@ -12,6 +12,7 @@ public class DungeonControl : MonoBehaviour
 
     private void Start()
     {
+        // ダンジョン生成
         dgGenerator.CreateDungeon();   
     }
 

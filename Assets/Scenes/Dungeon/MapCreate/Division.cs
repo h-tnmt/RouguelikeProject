@@ -12,6 +12,9 @@ public class Rect
     public int Left { get; set; }       // 左
     public int Right { get; set; }      // 右
 
+    /// <summary>
+    /// コンストラクタ
+    /// </summary>
     public Rect() { }
 
     /// <summary>
@@ -79,9 +82,12 @@ public class Division
 {
     // 外周
     public Rect outer;
+    // 部屋
+    public Rect room;
     
     public Division()
     {
         outer = new Rect();
+        room = new Rect();
     }
 }
