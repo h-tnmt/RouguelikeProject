@@ -63,6 +63,17 @@ public class MapInfo
     }
 
     /// <summary>
+    /// セルの状態登録
+    /// </summary>
+    /// <param name="x"></param>
+    /// <param name="y"></param>
+    /// <param name="state"></param>
+    public void SetState(int x, int y, MapState state)
+    {
+        mapCell[y, x].State = state;
+    }
+
+    /// <summary>
     /// 全て同じ状態にする
     /// </summary>
     /// <param name="state"></param>
@@ -94,6 +105,44 @@ public class MapInfo
     }
 
     /// <summary>
+    /// 縦の状態を変更
+    /// </summary>
+    /// <param name="from"></param>
+    /// <param name="to"></param>
+    /// <param name="x"></param>
+    /// <param name="state"></param>
+    public void SetMapStateVertical(int from, int to, int x, MapState state)
+    {
+        if (to < from)
+        {
+            // 値入れ替え
+            (from, to) = (to, from);
+        }
+
+        // 通路作成(道幅で+1)
+        SetMapStateRange(new Rect(from, x, to + 1, x + 1), state);
+    }
+
+    /// <summary>
+    /// 横の状態を変更
+    /// </summary>
+    /// <param name="from"></param>
+    /// <param name="to"></param>
+    /// <param name="y"></param>
+    /// <param name="state"></param>
+    public void SetMapStateHorizontal(int from, int to, int y, MapState state)
+    {
+        if (to < from)
+        {
+            // 値入れ替え
+            (from, to) = (to, from);
+        }
+
+        // 通路作成
+        SetMapStateRange(new Rect(y, from, y + 1, to + 1), state);
+    }
+
+    /// <summary>
     /// 縦の通路を作成
     /// </summary>
     /// <param name="from"></param>
@@ -101,14 +150,7 @@ public class MapInfo
     /// <param name="width"></param>
     public void SetMapRoadVertical(int from, int to, int x)
     {
-        if(to < from)
-        {
-            // 値入れ替え
-            (from, to) = (to, from);
-        }
-
-        // 通路作成(道幅で+1)
-        SetMapStateRange(new Rect(from, x, to + 1, x + 1), MapState.Road);
+        SetMapStateVertical(from, to, x, MapState.Road);
     }
 
     /// <summary>
@@ -119,13 +161,6 @@ public class MapInfo
     /// <param name="width"></param>
     public void SetMapRoadHorizontal(int from, int to, int y)
     {
-        if (to < from)
-        {
-            // 値入れ替え
-            (from, to) = (to, from);
-        }
-
-        // 通路作成
-        SetMapStateRange(new Rect(y, from, y + 1, to + 1), MapState.Road);
+        SetMapStateHorizontal(from, to, y, MapState.Road);
     }
 }

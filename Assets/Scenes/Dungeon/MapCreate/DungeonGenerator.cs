@@ -54,6 +54,9 @@ public class DungeonGenerator : MonoBehaviour
         // 3. 部屋から区画の端に道をつなげる
         CreateRoad();
 
+        // 4. 行き止まり削除
+        DeleteDeadEnd();
+
         // (デバッグ用)マップ表示
         DebugShowDungeonMap();
     }
@@ -193,6 +196,85 @@ public class DungeonGenerator : MonoBehaviour
             int right = Random.Range(div.room.Top, div.room.Bottom);
             mapInfo.SetMapRoadHorizontal(div.room.Right, div.outer.Right, right);
         }
+    }
+
+    /// <summary>
+    /// 行き止まり削除
+    /// </summary>
+    private void DeleteDeadEnd()
+    {
+        // マップの右端と下端を壁にす
+        mapInfo.SetMapStateVertical(0, MaxHeight - 1, MaxWidth - 1, MapInfo.MapState.Wall);
+        mapInfo.SetMapStateHorizontal(0, MaxWidth - 1, MaxHeight - 1, MapInfo.MapState.Wall);
+
+
+        var Dir = new int[,]{ { 0, -1 }, { -1, 0 }, { 1, 0 }, { 0, 1 } };
+        int count = 0;
+        bool deadEndFlg = false;
+        foreach (var div in divList)
+        {
+            while (true)
+            {
+                for (int i = div.outer.Top; i <= div.outer.Bottom; i++)
+                {
+                    for (int j = div.outer.Left; j <= div.outer.Right; j++)
+                    {
+                        count = 0;
+                        deadEndFlg = false;
+
+                        if (mapInfo.GetState(j, i) == MapInfo.MapState.Wall)
+                        {
+                            // すでに壁
+                            continue;
+                        }
+
+                        // 周りが壁かチェック
+                        for (int k = 0; k < Dir.GetLength(0); k++)
+                        {
+                            int x = j + Dir[k, 0];
+                            int y = i + Dir[k, 1];
+
+                            if (x < 0 || MaxWidth <= x ||
+                                y < 0 || MaxHeight <= y)
+                            {
+                                // 範囲外
+                                count++;
+                                continue;
+                            }
+
+                            if (mapInfo.GetState(x, y) == MapInfo.MapState.Wall)
+                            {
+                                count++;
+                            }
+                        }
+
+                        if (count >= Dir.GetLength(0) - 1)
+                        {
+                            // 一方向以外は壁（行き止まり）
+                            // 壁に変更
+                            mapInfo.SetState(j, i, MapInfo.MapState.Wall);
+                            deadEndFlg = true;
+                            break;
+                        }
+                    }
+                    if (deadEndFlg)
+                    {
+                        break;
+                    }
+                }
+
+                if (deadEndFlg)
+                {
+                    // 行き止まりがあれば最初からチェック
+                    continue;
+                }
+
+                // 次の区画へ
+                break;
+
+            }
+        }
+
     }
 
     /// <summary>
