@@ -31,7 +31,11 @@ public class MapInfo
         CreateMap(width, height);
     }
 
-    // マップ生成
+    /// <summary>
+    ///  マップ生成
+    /// </summary>
+    /// <param name="width"></param>
+    /// <param name="height"></param>
     private void CreateMap(int width, int height)
     {
         // メモリ確保
@@ -47,13 +51,21 @@ public class MapInfo
         }
     }
 
-    // セルの状態取得
+    /// <summary>
+    /// セルの状態取得
+    /// </summary>
+    /// <param name="x"></param>
+    /// <param name="y"></param>
+    /// <returns></returns>
     public MapState GetState(int x, int y)
     {
         return mapCell[y, x].State;
     }
 
-    // 全て同じ状態にする
+    /// <summary>
+    /// 全て同じ状態にする
+    /// </summary>
+    /// <param name="state"></param>
     public void SetMapStateAll(MapState state)
     {
         for(int y = 0; y < height; y++)
@@ -65,7 +77,11 @@ public class MapInfo
         }
     }
 
-    // 範囲内の状態を変更
+    /// <summary>
+    /// 範囲内の状態を変更
+    /// </summary>
+    /// <param name="rect"></param>
+    /// <param name="state"></param>
     public void SetMapStateRange(Rect rect, MapState state)
     {
         for(int y = rect.Top; y < rect.Bottom; y++)
@@ -75,5 +91,41 @@ public class MapInfo
                 mapCell[y, x].State = state;
             }
         }
+    }
+
+    /// <summary>
+    /// 縦の通路を作成
+    /// </summary>
+    /// <param name="from"></param>
+    /// <param name="to"></param>
+    /// <param name="width"></param>
+    public void SetMapRoadVertical(int from, int to, int x)
+    {
+        if(to < from)
+        {
+            // 値入れ替え
+            (from, to) = (to, from);
+        }
+
+        // 通路作成(道幅で+1)
+        SetMapStateRange(new Rect(from, x, to + 1, x + 1), MapState.Road);
+    }
+
+    /// <summary>
+    /// 横の通路を作成
+    /// </summary>
+    /// <param name="from"></param>
+    /// <param name="to"></param>
+    /// <param name="width"></param>
+    public void SetMapRoadHorizontal(int from, int to, int y)
+    {
+        if (to < from)
+        {
+            // 値入れ替え
+            (from, to) = (to, from);
+        }
+
+        // 通路作成
+        SetMapStateRange(new Rect(y, from, y + 1, to + 1), MapState.Road);
     }
 }
