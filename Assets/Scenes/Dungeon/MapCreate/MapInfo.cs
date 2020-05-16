@@ -95,9 +95,9 @@ public class MapInfo
     /// <param name="state"></param>
     public void SetMapStateRange(Rect rect, MapState state)
     {
-        for(int y = rect.Top; y < rect.Bottom; y++)
+        for(int y = rect.Top; y <= rect.Bottom; y++)
         {
-            for(int x = rect.Left; x < rect.Right; x++)
+            for(int x = rect.Left; x <= rect.Right; x++)
             {
                 mapCell[y, x].State = state;
             }
@@ -120,7 +120,7 @@ public class MapInfo
         }
 
         // 通路作成(道幅で+1)
-        SetMapStateRange(new Rect(from, x, to + 1, x + 1), state);
+        SetMapStateRange(new Rect(from, x, to, x), state);
     }
 
     /// <summary>
@@ -139,7 +139,7 @@ public class MapInfo
         }
 
         // 通路作成
-        SetMapStateRange(new Rect(y, from, y + 1, to + 1), state);
+        SetMapStateRange(new Rect(y, from, y, to), state);
     }
 
     /// <summary>
@@ -162,5 +162,10 @@ public class MapInfo
     public void SetMapRoadHorizontal(int from, int to, int y)
     {
         SetMapStateHorizontal(from, to, y, MapState.Road);
+    }
+
+    public bool HasConnectRoad(int x, int y)
+    {
+        return mapCell[y, x].State == MapState.Road;
     }
 }

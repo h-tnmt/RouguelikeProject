@@ -26,7 +26,10 @@ public class Rect
     /// <param name="right"></param>
     public Rect(int top, int left, int bottom, int right) 
     {
-        SetRect(top, left, bottom, right);
+        Top = top;
+        Left = left;
+        Bottom = bottom;
+        Right = right;
     }
 
     /// <summary>
@@ -34,14 +37,14 @@ public class Rect
     /// </summary>
     /// <param name="top"></param>
     /// <param name="left"></param>
-    /// <param name="bottom"></param>
-    /// <param name="right"></param>
-    public void SetRect(int top, int left, int bottom, int right)
+    /// <param name="height"></param>
+    /// <param name="width"></param>
+    public void SetRect(int top, int left, int height, int width)
     {
         this.Top = top;
         this.Left = left;
-        this.Bottom = bottom;
-        this.Right = right;
+        this.Bottom = top + height - 1;
+        this.Right = left + width - 1;
     }
 
     /// <summary>
@@ -50,7 +53,8 @@ public class Rect
     /// <returns></returns>
     public int GetWidth()
     {
-        return Right - Left;
+        // 0スタートなので+1
+        return Right - Left + 1;
     }
 
     /// <summary>
@@ -59,7 +63,8 @@ public class Rect
     /// <returns></returns>
     public int GetHeight()
     {
-        return Bottom - Top;
+        // 0スタートなので+1
+        return Bottom - Top + 1;
     }
 
     /// <summary>
@@ -84,7 +89,7 @@ public class Division
     public Rect outer;
     // 部屋
     public Rect room;
-    
+
     public Division()
     {
         outer = new Rect();

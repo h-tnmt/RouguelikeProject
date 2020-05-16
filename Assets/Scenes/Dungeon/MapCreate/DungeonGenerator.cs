@@ -8,12 +8,12 @@ using System.Linq;
 /// </summary>
 public class DungeonGenerator : MonoBehaviour
 {
-    readonly int MaxWidth = 30;                     // ダンジョン最大幅
-    readonly int MaxHeight = 30;                    // ダンジョン最大高さ
-    readonly int RoomMinWidth = 3;                  // 部屋最小幅
-    readonly int RoomMinHeight = 3;                 // 部屋最小高さ
-    readonly int RoomMinMarginBottomRight = 2;      // 区画と部屋の最小余白(右下)
-    readonly int RoomMinMarginTopLeft = 1;          // 区画と部屋の最小余白(左上)
+    const int MaxWidth = 30;         // ダンジョン最大幅
+    const int MaxHeight = 30;        // ダンジョン最大高さ
+    const int RoomMinWidth = 3;      // 部屋最小幅
+    const int RoomMinHeight = 3;     // 部屋最小高さ
+    const int RoomMinMergin = 1;     // 区画と部屋の最小余白    
+    const int RoomTotalMargin = RoomMinMergin * 2 + 1;  // 区画と部屋の余白合計(最小余白*2 + 壁)
 
     // 区画リスト
     List<Division> divList;
@@ -29,32 +29,30 @@ public class DungeonGenerator : MonoBehaviour
         mapInfo = new MapInfo(MaxWidth, MaxHeight);
 
         // 作成手順
-        // 1. 区画生成
-        // 2. 区画内に部屋生成
-        // 3. 部屋から区画の端に道をつなげる
-        // 4. 行き止まりを消す
+        // 1. 全てを壁にする
+        // 2. 最初の区画を生成
+        // 3. 区画を分割
+        // 4. 区画内に部屋生成
+        // 5. 部屋と部屋をつなげる
+        // 6. 行き止まりを削除
 
-        // 1. 区画生成
 
-        // 1-1. 最初の区画登録
-        var div = new Division();
-        div.outer.SetRect(0, 0, MaxHeight - 1, MaxWidth - 1);
-        divList.Add(div);
-        // 1-2. 区画分割
-        CreateDivision(div);
-
-        // 2. 区画内に部屋生成
-
-        // 2-1. マップをすべて壁に
+        // 1. マップをすべて壁に
         mapInfo.SetMapStateAll(MapInfo.MapState.Wall);
 
-        // 2-2. 部屋の生成
+        // 2. 最初の区画登録
+        CreateDivision();
+
+        // 3. 区画分割
+        SplitDivision(divList.Last());
+
+        // 4. 部屋の生成
         CreateRoom();
 
-        // 3. 部屋から区画の端に道をつなげる
+        // 5.部屋と部屋をつなげる
         CreateRoad();
 
-        // 4. 行き止まり削除
+        // 6. 行き止まりを削除
         DeleteDeadEnd();
 
         // (デバッグ用)マップ表示
@@ -64,7 +62,17 @@ public class DungeonGenerator : MonoBehaviour
     /// <summary>
     /// 区画生成
     /// </summary>
-    void CreateDivision(Division div)
+    void CreateDivision()
+    {
+        var div = new Division();
+        div.outer.SetRect(0, 0, MaxHeight, MaxWidth);
+        divList.Add(div);
+    }
+
+    /// <summary>
+    /// 区画生成
+    /// </summary>
+    void SplitDivision(Division div)
     {
         // 追加区画
         var div_add = new Division();
@@ -77,9 +85,9 @@ public class DungeonGenerator : MonoBehaviour
         {
             // 縦に分割
 
-            // (部屋最小サイズ+部屋の上下余白) * 2 以上か
-            int min_range = RoomMinHeight + RoomMinMarginTopLeft + RoomMinMarginBottomRight;
-            if (div.outer.GetHeight() > min_range * 2)
+            // (部屋最小サイズ+部屋の上下余白)
+            int min_range = RoomMinHeight + RoomTotalMargin;
+            if (div.outer.GetHeight() >= min_range * 2)
             {
                 // 分割位置を決める
                 int max_range = div.outer.GetHeight() - min_range * 2;
@@ -107,9 +115,9 @@ public class DungeonGenerator : MonoBehaviour
         {
             // 横に分割
 
-            // (部屋最小サイズ+部屋の左右余白) * 2 以上か
-            int min_range = RoomMinWidth + RoomMinMarginTopLeft + RoomMinMarginBottomRight;
-            if (div.outer.GetWidth() > min_range * 2)
+            // (部屋最小サイズ+部屋の左右余白以上か
+            int min_range = RoomMinWidth + RoomTotalMargin;
+            if (div.outer.GetWidth() >= min_range * 2)
             {
                 // 分割位置を決める
                 int max_range = div.outer.GetWidth() - min_range * 2;
@@ -134,12 +142,11 @@ public class DungeonGenerator : MonoBehaviour
             }
         }
 
-        // 区画を追加
         divList.Add(div_add);
 
         // 再帰呼び出しでさらに分割
-        CreateDivision(div);
-        CreateDivision(div_add);
+        SplitDivision(div);
+        SplitDivision(div_add);
     }
 
     /// <summary>
@@ -150,19 +157,19 @@ public class DungeonGenerator : MonoBehaviour
         foreach (var div in divList)
         {
             // 部屋の最大範囲を計算
-            int maxWidth = div.outer.GetWidth() - (RoomMinMarginTopLeft + RoomMinMarginBottomRight);
-            int maxHeight = div.outer.GetHeight() - (RoomMinMarginTopLeft + RoomMinMarginBottomRight);
+            int maxWidth = div.outer.GetWidth() - RoomTotalMargin;
+            int maxHeight = div.outer.GetHeight() - RoomTotalMargin;
 
             // 部屋の範囲をランダムに決定
             int width = Random.Range(RoomMinWidth, maxWidth + 1);
             int height = Random.Range(RoomMinHeight, maxHeight + 1);
 
-            // 部屋の左上座標をランダムに決定
-            int top = Random.Range(div.outer.Top + RoomMinMarginTopLeft, div.outer.Bottom - (RoomMinMarginBottomRight + height) + 1);
-            int left = Random.Range(div.outer.Left + RoomMinMarginTopLeft, div.outer.Right - (RoomMinMarginBottomRight + width) + 1);
+            // 部屋の左上座標をランダムに決定(外周左上座標 + 通路幅)
+            int top = Random.Range(div.outer.Top + RoomMinMergin, div.outer.Bottom - (RoomTotalMargin - RoomMinMergin + height) + 1);
+            int left = Random.Range(div.outer.Left + RoomMinMergin, div.outer.Right - (RoomTotalMargin - RoomMinMergin + width) + 1);
 
             // 部屋サイズを設定
-            div.room.SetRect(top, left, top + height, left + width);
+            div.room.SetRect(top, left, height, width);
             // 部屋を通路として登録
             mapInfo.SetMapStateRange(div.room, MapInfo.MapState.Road);
         }
@@ -175,26 +182,86 @@ public class DungeonGenerator : MonoBehaviour
     {
         foreach(var div in divList)
         {
-            // 区画の右側をすべて壁にする
-            mapInfo.SetMapRoadVertical(div.outer.Top, div.outer.Bottom, div.outer.Right);
-            // 区画の下側をすべて壁にする
-            mapInfo.SetMapRoadHorizontal(div.outer.Left, div.outer.Right, div.outer.Bottom);
+            var outer = div.outer;
+            var room = div.room;
+            // 外周の右側と下側を通路作成(マップ端は除く)
+            if(outer.Right < MaxWidth - 1)
+            {
+                mapInfo.SetMapRoadVertical(outer.Top, outer.Bottom, outer.Right);
+            }
+            if(outer.Bottom < MaxHeight - 1)
+            {
+                mapInfo.SetMapRoadHorizontal(outer.Left, outer.Right, outer.Bottom);
+            }
+
+            // 0. 上
+            // 1. 左
+            // 2. 下
+            // 3. 右
+            var roadList = new List<int> { 0, 1, 2, 3 };
+
+            if (outer.Top == 0) roadList.Remove(0);
+            if (outer.Left == 0) roadList.Remove(1);
+            if (outer.Bottom == MaxHeight - 1) roadList.Remove(2);
+            if (outer.Right == MaxWidth - 1) roadList.Remove(3);
+
+            if (roadList.Count == 0)
+            {
+                // 通路を作成できない
+                return;
+            }
+
+            var hasRoadList = new List<int> ();
+            if(outer.Top == 0 && outer.Bottom == MaxHeight - 1)
+            {
+                // 上下に通路を作れないので左右に通路を作る
+                hasRoadList.Add(1);
+                hasRoadList.Add(3);
+            }
+            if(outer.Left == 0 && outer.Right == MaxWidth - 1)
+            {
+                // 左右に通路を作れないので上下に道を作る
+                hasRoadList.Add(0);
+                hasRoadList.Add(2);
+            }
+
+            // １つは通路を作る
+            var isRoad = roadList[Random.Range(0, roadList.Count)];
+            if (!hasRoadList.Contains(isRoad))
+            {
+                hasRoadList.Add(isRoad);
+            }
+
+            int pos;
 
             // 上側通路
-            int top = Random.Range(div.room.Left, div.room.Right);
-            mapInfo.SetMapRoadVertical(div.room.Top, div.outer.Top, top);
-
-            // 下側通路
-            int bottom = Random.Range(div.room.Left, div.room.Right);
-            mapInfo.SetMapRoadVertical(div.room.Bottom, div.outer.Bottom, bottom);
+            if(hasRoadList.Contains(0) || Random.Range(0, 2) == 0)
+            {
+                pos = Random.Range(room.Left, room.Right + 1);
+                mapInfo.SetMapRoadVertical(outer.Top, room.Top, pos);
+            }
 
             // 左側通路
-            int left = Random.Range(div.room.Top, div.room.Bottom);
-            mapInfo.SetMapRoadHorizontal(div.room.Left, div.outer.Left, left);
+            if (hasRoadList.Contains(1) || Random.Range(0, 2) == 0)
+            {
+                pos = Random.Range(room.Top, room.Bottom + 1);
+                mapInfo.SetMapRoadHorizontal(outer.Left, room.Left, pos);
+            }
 
-            // 右下通路
-            int right = Random.Range(div.room.Top, div.room.Bottom);
-            mapInfo.SetMapRoadHorizontal(div.room.Right, div.outer.Right, right);
+            // 下側通路
+            if (hasRoadList.Contains(2) || Random.Range(0, 2) == 0)
+            {
+                pos = Random.Range(room.Left, room.Right + 1);
+                mapInfo.SetMapRoadVertical(room.Bottom, outer.Bottom, pos);
+            }
+
+            // 右側通路
+            if (hasRoadList.Contains(3) || Random.Range(0, 2) == 0)
+            {
+                pos = Random.Range(room.Top, room.Bottom + 1);
+                mapInfo.SetMapRoadHorizontal(room.Right, outer.Right, pos);
+            }
+            
         }
     }
 
@@ -203,11 +270,6 @@ public class DungeonGenerator : MonoBehaviour
     /// </summary>
     private void DeleteDeadEnd()
     {
-        // マップの右端と下端を壁にす
-        mapInfo.SetMapStateVertical(0, MaxHeight - 1, MaxWidth - 1, MapInfo.MapState.Wall);
-        mapInfo.SetMapStateHorizontal(0, MaxWidth - 1, MaxHeight - 1, MapInfo.MapState.Wall);
-
-
         var Dir = new int[,]{ { 0, -1 }, { -1, 0 }, { 1, 0 }, { 0, 1 } };
         int count = 0;
         bool deadEndFlg = false;
